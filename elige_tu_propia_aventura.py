@@ -41,68 +41,6 @@ conexion.commit()
 # 2. FUNCIONES PARA GUARDAR EL PROGRESO
 # ==========================================
 
-def guardar_escena(nueva_escena):
-
-    cursor.execute("""
-    UPDATE jugador
-    SET escena_actual = ?
-    WHERE id = 1
-    """, (nueva_escena,))
-
-    conexion.commit()
-
-
-def guardar_decision(decision, escena_anterior):
-
-    cursor.execute("""
-    INSERT INTO decisiones (decision, escena)
-    VALUES (?, ?)
-    """, (decision, escena_anterior))
-
-    conexion.commit()
-
-
-def agregar_objeto(objeto):
-
-    cursor.execute("""
-    INSERT INTO inventario (objeto)
-    VALUES (?)
-    """, (objeto,))
-
-    conexion.commit()
-
-
-def mostrar_inventario():
-
-    cursor.execute("SELECT objeto FROM inventario")
-    objetos = cursor.fetchall()
-
-    print("\n--- INVENTARIO ---")
-
-    if objetos:
-
-        for objeto in objetos:
-            print("-", objeto[0])
-
-    else:
-
-        print("No tienes objetos todavía.")
-
-
-def elegir_opcion(opciones):
-
-    for numero, descripcion in opciones.items():
-        print(numero, "-", descripcion)
-
-    eleccion = input("\n¿Qué decides hacer? ")
-
-    while eleccion not in opciones:
-
-        print("Opción incorrecta.")
-        eleccion = input("Elige nuevamente: ")
-
-    return eleccion
-
 
 # ==========================================
 # 3. CARGAR O CREAR UNA PARTIDA
