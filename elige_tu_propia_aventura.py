@@ -66,6 +66,7 @@ def elegir_opcion(opciones):
     
     return eleccion
 
+<<<<<<< Updated upstream
 def mostrar_inventario():
 
     cursor.execute("SELECT objeto FROM inventario")
@@ -81,6 +82,36 @@ def mostrar_inventario():
     else:
 
         print("No tienes objetos todavía.")
+=======
+def consultar_estadisticas():
+    nombre_consultado = input("\nIngresa el nombre del usuario: ").strip()
+    while not nombre_consultado:
+        nombre_consultado = input("El nombre no puede estar vacío. Intenta nuevamente: ").strip()
+
+    cursor.execute("""
+    SELECT nombre, escena_actual
+    FROM jugador
+    WHERE nombre = ? COLLATE NOCASE
+    """, (nombre_consultado,))
+    jugador_consultado = cursor.fetchone()
+
+    if not jugador_consultado:
+        print(f"\nNo se encontraron estadísticas para {nombre_consultado}.")
+        return
+
+    cursor.execute("SELECT COUNT(*) FROM decisiones")
+    total_decisiones = cursor.fetchone()[0]
+
+    cursor.execute("SELECT objeto FROM inventario")
+    objetos = [fila[0] for fila in cursor.fetchall()]
+
+    print("\n================================")
+    print(f"ESTADÍSTICAS DE {jugador_consultado[0]}")
+    print("================================")
+    print("Estado de la aventura:", jugador_consultado[1])
+    print("Decisiones tomadas:", total_decisiones)
+    print("Objetos en el inventario:", ", ".join(objetos) if objetos else "Ninguno")
+>>>>>>> Stashed changes
 
 # ==========================================
 # 3. CARGAR O CREAR UNA PARTIDA
@@ -89,8 +120,29 @@ def mostrar_inventario():
 cursor.execute("SELECT * FROM jugador WHERE id = 1")
 jugador = cursor.fetchone()
 
+while True:
+    if jugador:
+        opciones_menu = {
+            "1": "Continuar partida",
+            "2": "Empezar una nueva",
+            "3": "Consultar estadísticas de un jugador"
+        }
+    else:
+        opciones_menu = {
+            "1": "Empezar una nueva partida",
+            "2": "Consultar estadísticas de un jugador"
+        }
+
+    opcion = elegir_opcion(opciones_menu)
+
+    if (jugador and opcion == "3") or (not jugador and opcion == "2"):
+        consultar_estadisticas()
+    else:
+        break
+
 if jugador:
 
+<<<<<<< Updated upstream
     print("\n¡Bienvenido nuevamente!")
     print("Partida encontrada.")
 
@@ -103,7 +155,12 @@ if jugador:
     while opcion not in ["1", "2"]:
         opcion = input("Opción incorrecta. Elige 1 o 2: ")
 
+=======
+>>>>>>> Stashed changes
     if opcion == "1":
+
+        print("\n¡Bienvenido nuevamente!")
+        print("Partida encontrada.")
 
         nombre = jugador[1]
         escena = jugador[2]
