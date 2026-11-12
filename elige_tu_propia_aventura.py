@@ -1,6 +1,4 @@
-
 import sqlite3
-
 # ==========================================
 # 1. CONEXION CON LA BASE DE DATOS
 # ==========================================
@@ -40,7 +38,55 @@ conexion.commit()
 # ==========================================
 # 2. FUNCIONES PARA GUARDAR EL PROGRESO
 # ==========================================
+def guardar_escena(escena):
+    cursor.execute("""
+    UPDATE jugador
+    SET escena_actual = ?
+    WHERE id = 1
+    """, (escena,))
+    conexion.commit()
 
+def guardar_decision(decision, escena):
+    cursor.execute("""
+    INSERT INTO decisiones (decision, escena)
+    VALUES (?, ?)
+    """, (decision, escena))
+    
+    conexion.commit()
+
+def agregar_objeto(objeto):
+    cursor.execute("""
+    INSERT INTO inventario (objeto)
+    VALUES (?)
+    """, (objeto,))
+    
+    conexion.commit()
+    
+def mostrar_inventario():
+    cursor.execute("""
+    SELECT objeto FROM inventario
+    """)
+    
+    inventario = cursor.fetchall()
+    
+    if inventario:
+        print("\nInventario:")
+        for item in inventario:
+            print("-", item[0])
+    else:
+        print("\nInventario vacío.")
+        
+def elegir_opcion(opciones):
+    print("\nOpciones:")
+    for key, value in opciones.items():
+        print(f"{key}. {value}")
+    
+    eleccion = input("Elige una opción: ")
+    
+    while eleccion not in opciones:
+        eleccion = input("Opción incorrecta. Elige nuevamente: ")
+    
+    return eleccion
 
 # ==========================================
 # 3. CARGAR O CREAR UNA PARTIDA
@@ -289,11 +335,12 @@ while True:
     elif escena == "refugio":
 
         print("\nEncuentras una pequeña cabaña.")
-        print("Dentro hay una mochila con provisiones.")
+        print("De la nada se cierra brucamente la puerta.")
+        print("No puedes salir.")
 
         opciones = {
-            "1": "Tomar las provisiones",
-            "2": "Salir de la cabaña"
+            "1": "Retractarte",
+            "2": "Salir del juego"
         }
 
         eleccion = elegir_opcion(opciones)
@@ -302,11 +349,13 @@ while True:
 
         if eleccion == "1":
 
-            agregar_objeto("Provisiones")
+            escena = "bosque"
 
-        escena = "bosque"
+            guardar_escena(escena)
 
-        guardar_escena(escena)
+        else:
+
+            break
 
 
     # ======================================
