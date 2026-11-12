@@ -146,102 +146,132 @@ def consultar_estadisticas():
 # 3. CARGAR O CREAR UNA PARTIDA
 # ==========================================
 
-cursor.execute("SELECT * FROM jugador WHERE id = 1")
-jugador = cursor.fetchone()
-
-if jugador:
-    opciones_menu = {
-        "1": "Continuar partida",
-        "2": "Empezar una nueva",
-        "3": "Consultar estadísticas de un jugador"
-    }
-else:
-    opciones_menu = {
-        "1": "Empezar una nueva partida",
-        "2": "Consultar estadísticas de un jugador"
-    }
+cursor.execute("SELECT COUNT(*) FROM jugador")
+hay_partidas = cursor.fetchone()[0] > 0
 
 while True:
+    if hay_partidas:
+        opciones_menu = {
+            "1": "Continuar partida",
+            "2": "Empezar una nueva",
+            "3": "Consultar estadísticas de un jugador"
+        }
+    else:
+        opciones_menu = {
+            "1": "Empezar una nueva partida",
+            "2": "Consultar estadísticas de un jugador"
+        }
+
     opcion = elegir_opcion(opciones_menu)
 
-    if (jugador and opcion == "3") or (not jugador and opcion == "2"):
+    if (hay_partidas and opcion == "3") or (not hay_partidas and opcion == "2"):
         consultar_estadisticas()
-    else:
+        continue
+
+    if hay_partidas and opcion == "1":
+        nombre_consultado = input(
+            "\nIngresa el nombre del usuario que quiere continuar: "
+        ).strip()
+        while not nombre_consultado:
+            nombre_consultado = input(
+                "El nombre no puede estar vacío. Intenta nuevamente: "
+            ).strip()
+
+        cursor.execute("""
+        SELECT id, nombre, escena_actual
+        FROM jugador
+        WHERE nombre = ? COLLATE NOCASE
+        ORDER BY id DESC
+        LIMIT 1
+        """, (nombre_consultado,))
+        partida = cursor.fetchone()
+
+        if not partida:
+            print(f"\nNo se encontró una partida guardada para {nombre_consultado}.")
+            continue
+
+        jugador_id, nombre, escena = partida
         break
 
-if jugador:
-    if opcion == "1":
+    nombre = input("\nIngresa tu nombre: ").strip()
+    while not nombre:
+        nombre = input("El nombre no puede estar vacío. Intenta nuevamente: ").strip()
 
-        nombre = jugador[1]
-        escena = jugador[2]
+    cursor.execute("""
+    SELECT id
+    FROM jugador
+    WHERE nombre = ? COLLATE NOCASE
+    ORDER BY id DESC
+    LIMIT 1
+    """, (nombre,))
+    jugador_existente = cursor.fetchone()
 
-        if escena == "terminado":
-
-            print("\n¡Ya completaste esta aventura!")
-
-            opcion = input(
-                "\n1. Empezar una nueva aventura"
-                "\n2. Salir"
-                "\nElige: "
-            )
-
-            while opcion not in ["1", "2"]:
-                opcion = input("Elige 1 o 2: ")
-
-            if opcion == "2":
-
-                conexion.close()
-                exit()
-
-            else:
-
-                nombre = input("\nIngresa tu nombre: ")
-                escena = "inicio"
-
-                cursor.execute("DELETE FROM decisiones WHERE jugador_id = ?", (jugador[0],))
-                cursor.execute("DELETE FROM inventario WHERE jugador_id = ?", (jugador[0],))
-
-                cursor.execute("""
-                UPDATE jugador
-                SET nombre = ?, escena_actual = ?
-                WHERE id = 1
-                """, (nombre, escena))
-
-                conexion.commit()
-
-        else:
-
-            print("\nContinuando partida de", nombre)
-
+    if jugador_existente:
+        jugador_id = jugador_existente[0]
+        cursor.execute(
+            "DELETE FROM decisiones WHERE jugador_id = ?",
+            (jugador_id,)
+        )
+        cursor.execute(
+            "DELETE FROM inventario WHERE jugador_id = ?",
+            (jugador_id,)
+        )
+        cursor.execute("""
+        UPDATE jugador
+        SET nombre = ?, escena_actual = 'inicio'
+        WHERE id = ?
+        """, (nombre, jugador_id))
     else:
+        cursor.execute("""
+        INSERT INTO jugador (nombre, escena_actual)
+        VALUES (?, 'inicio')
+        """, (nombre,))
+        jugador_id = cursor.lastrowid
 
-        nombre = input("\nIngresa tu nombre: ")
+    conexion.commit()
+    escena = "inicio"
+    break
+
+if hay_partidas and opcion == "1":
+    if escena == "terminado":
+        print("\n¡Ya completaste esta aventura!")
+
+        opcion = input(
+            "\n1. Empezar una nueva aventura"
+            "\n2. Salir"
+            "\nElige: "
+        )
+
+        while opcion not in ["1", "2"]:
+            opcion = input("Elige 1 o 2: ")
+
+        if opcion == "2":
+            conexion.close()
+            exit()
+
+        nombre = input("\nIngresa tu nombre: ").strip()
+        while not nombre:
+            nombre = input(
+                "El nombre no puede estar vacío. Intenta nuevamente: "
+            ).strip()
         escena = "inicio"
 
-        cursor.execute("DELETE FROM decisiones WHERE jugador_id = ?", (jugador[0],))
-        cursor.execute("DELETE FROM inventario WHERE jugador_id = ?", (jugador[0],))
-
+        cursor.execute(
+            "DELETE FROM decisiones WHERE jugador_id = ?",
+            (jugador_id,)
+        )
+        cursor.execute(
+            "DELETE FROM inventario WHERE jugador_id = ?",
+            (jugador_id,)
+        )
         cursor.execute("""
         UPDATE jugador
         SET nombre = ?, escena_actual = ?
-        WHERE id = 1
-        """, (nombre, escena))
-
+        WHERE id = ?
+        """, (nombre, escena, jugador_id))
         conexion.commit()
-
-else:
-
-    nombre = input("\nIngresa tu nombre: ")
-    escena = "inicio"
-
-    cursor.execute("""
-    INSERT INTO jugador (id, nombre, escena_actual)
-    VALUES (1, ?, ?)
-    """, (nombre, escena))
-
-    conexion.commit()
-
-jugador_id = jugador[0] if jugador else 1
+    else:
+        print("\nContinuando partida de", nombre)
 
 # ==========================================
 # 4. COMIENZO DE LA AVENTURA
