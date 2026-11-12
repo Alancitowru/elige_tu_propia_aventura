@@ -53,7 +53,7 @@ def guardar_decision(decision, escena):
     """, (decision, escena))
     
     conexion.commit()
-        
+
 def elegir_opcion(opciones):
     print("\nOpciones:")
     for key, value in opciones.items():
@@ -65,6 +65,22 @@ def elegir_opcion(opciones):
         eleccion = input("Opción incorrecta. Elige nuevamente: ")
     
     return eleccion
+
+def mostrar_inventario():
+
+    cursor.execute("SELECT objeto FROM inventario")
+    objetos = cursor.fetchall()
+
+    print("\n--- INVENTARIO ---")
+
+    if objetos:
+
+        for objeto in objetos:
+            print("-", objeto[0])
+
+    else:
+
+        print("No tienes objetos todavía.")
 
 # ==========================================
 # 3. CARGAR O CREAR UNA PARTIDA
@@ -85,7 +101,6 @@ if jugador:
     )
 
     while opcion not in ["1", "2"]:
-
         opcion = input("Opción incorrecta. Elige 1 o 2: ")
 
     if opcion == "1":
@@ -93,7 +108,6 @@ if jugador:
         nombre = jugador[1]
         escena = jugador[2]
 
-        # Comprobamos si la aventura ya terminó
         if escena == "terminado":
 
             print("\n¡Ya completaste esta aventura!")
